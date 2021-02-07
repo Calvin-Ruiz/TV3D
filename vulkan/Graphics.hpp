@@ -21,7 +21,7 @@ class Vulkan;
 
 class Graphics : public ThreadedModule {
 public:
-    Graphics(GLFWwindow *window, std::array<TextureLoader *, 8> &texLoader);
+    Graphics(GLFWwindow *window, std::array<TextureLoader *, 8> &texLoader, bool debug);
     virtual ~Graphics();
     Graphics(const Graphics &cpy) = delete;
     Graphics &operator=(const Graphics &src) = delete;

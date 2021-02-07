@@ -35,19 +35,19 @@ struct Vertex {
         attributeDescriptions[1].binding = 0;
         attributeDescriptions[1].location = 1;
         attributeDescriptions[1].format = VK_FORMAT_R32G32_SFLOAT;
-        attributeDescriptions[1].offset = sizeof(float) * 4;
+        attributeDescriptions[1].offset = sizeof(float) * 2;
         return attributeDescriptions;
     }
 };
 
-Vulkan::Vulkan(int width, int height, GLFWwindow *window) : refDevice(device), refRenderPass(renderPass), refSwapChainFramebuffers(swapChainFramebuffers), writePos(0), queueSize(0), prioritizedQueueSize(0)
+Vulkan::Vulkan(int width, int height, GLFWwindow *window, bool debug) : refDevice(device), refRenderPass(renderPass), refSwapChainFramebuffers(swapChainFramebuffers), writePos(0), queueSize(0), prioritizedQueueSize(0)
 {
     uint32_t glfwExtensionCount = 0;
     const char** glfwExtensions;
     glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
     instanceExtension.insert(instanceExtension.begin(), glfwExtensions, glfwExtensions + glfwExtensionCount);
 
-    initDevice("TV3D", "No Engine", window, true);
+    initDevice("TV3D", "No Engine", window, debug);
     initQueues();
     initSwapchain(width, height);
     createImageViews();
@@ -77,12 +77,23 @@ Vulkan::~Vulkan()
         vkDestroyBuffer(device, tex.buffer, nullptr);
         vkFreeMemory(device, tex.memory, nullptr);
     }
+    vkDestroyRenderPass(device, renderPass, nullptr);
+    vkDestroyPipeline(device, graphicsPipeline, nullptr);
+    vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
+    vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
+    vkDestroySampler(device, sampler, nullptr);
     for (auto &sem : acquired)
         vkDestroySemaphore(device, sem, nullptr);
     for (auto &sem : drawn)
         vkDestroySemaphore(device, sem, nullptr);
+    for (auto &fb : swapChainFramebuffers)
+        vkDestroyFramebuffer(device, fb, nullptr);
+    for (auto &iv : swapChainImageViews)
+        vkDestroyImageView(device, iv, nullptr);
+    vkDestroySwapchainKHR(device, swapChain, nullptr);
     vkDestroyDevice(device, nullptr);
-    destroyDebug();
+    if (hasLayer)
+        destroyDebug();
 }
 
 void Vulkan::waitFrame()
@@ -934,8 +945,8 @@ void Vulkan::createGraphicsPipeline()
     inputAssembly.primitiveRestartEnable = VK_FALSE;
 
     VkViewport viewport{}; // Déformation de l'image
-    viewport.width = swapChainExtent.height;
-    viewport.height = viewport.width;
+    viewport.width = swapChainExtent.width;
+    viewport.height = swapChainExtent.height;
     viewport.x = 0;
     viewport.y = 0;
     viewport.minDepth = 0.0f;
@@ -958,7 +969,7 @@ void Vulkan::createGraphicsPipeline()
     rasterizer.rasterizerDiscardEnable = VK_FALSE; // Désactiver la géométrie
     rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
     rasterizer.lineWidth = 1.0f;
-    rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
+    rasterizer.cullMode = VK_CULL_MODE_NONE;
     rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
     rasterizer.depthBiasEnable = VK_FALSE;
     rasterizer.depthBiasConstantFactor = 0.0f; // Optionnel

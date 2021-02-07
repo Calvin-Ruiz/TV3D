@@ -14,6 +14,7 @@ bool rescale = false;
 bool useDump = true;
 int gheight = 0;
 int gwidth = 0;
+bool debugMode = false;
 
 #define API GLFW_NO_API
 //#define API GLFW_OPENGL_API
@@ -60,12 +61,15 @@ void start(GLFWwindow *window)
             } else if (type == "USEDUMP") {
                 file >> type;
                 useDump = (type != "off");
+            } else if (type == "DEBUG") {
+                file >> type;
+                debugMode = (type == "on");
             }
         }
     }
     file.close();
 
-    Graphics *tmp = new Graphics(window, loaders);
+    Graphics *tmp = new Graphics(window, loaders, debugMode);
     for (int i = 0; i < loaders.size(); ++i) {
         std::string num = std::to_string(i);
         loaders[i] = new TextureLoader(Graphics::vulkan.get(), i, path + num + preFile + num + postFile, dumpPath + num + dumpPreFile + num + dumpPostFile);

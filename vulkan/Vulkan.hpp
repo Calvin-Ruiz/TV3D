@@ -46,7 +46,7 @@ struct TexData {
 
 class Vulkan {
 public:
-    Vulkan(int width, int height, GLFWwindow *window);
+    Vulkan(int width, int height, GLFWwindow *window, bool debug);
     virtual ~Vulkan();
     Vulkan(const Vulkan &cpy) = default;
     Vulkan &operator=(const Vulkan &src) = default;

@@ -18,10 +18,13 @@
 Graphics *Graphics::instance = nullptr;
 std::unique_ptr<Vulkan> Graphics::vulkan;
 
-Graphics::Graphics(GLFWwindow *window, std::array<TextureLoader *, 8> &texLoader) : window(window), texLoader(texLoader)
+Graphics::Graphics(GLFWwindow *window, std::array<TextureLoader *, 8> &texLoader, bool debug) : window(window), texLoader(texLoader)
 {
     instance = this;
-    vulkan = std::make_unique<Vulkan>(glfwGetVideoMode(glfwGetPrimaryMonitor())->width, glfwGetVideoMode(glfwGetPrimaryMonitor())->height, window);
+    int width = glfwGetVideoMode(glfwGetPrimaryMonitor())->width;
+    int height = glfwGetVideoMode(glfwGetPrimaryMonitor())->height;
+    std::cout << "Screen of " << width << "x" << height << " detected\n";
+    vulkan = std::make_unique<Vulkan>(width, height, window, debug);
 }
 
 Graphics::~Graphics() {}
@@ -38,12 +41,12 @@ void Graphics::initialize()
     brightPos = &uniform->brightPos;
 
     float datas[] = {
-        -1, 1, 0, 0,
-        1, 1, 1, 0,
-        -1, -1, 0, 1,
-        1, -1, 1, 1
+        -1, -1, 0, 0,
+        1, -1, 1, 0,
+        -1, 1, 0, 1,
+        1, 1, 1, 1
     };
-    char *data = reinterpret_cast<char *>(uniform) + sizeof(*uniform);
+    void *data = reinterpret_cast<void *>(uniform) + sizeof(UniformBlock);
     memcpy(data, datas, 16 * sizeof(float));
     ready = true;
 }
