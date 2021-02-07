@@ -70,10 +70,10 @@ Vulkan::~Vulkan() {}
 void Vulkan::waitFrame()
 {
     int tmp = (frameID + 1) % 4;
-    if (vkWaitForFences(device, 8, frameFences[tmp].data(), VK_TRUE, 10000000000) != VK_SUCCESS) {
-        std::cerr << "Fatal: Timeout (10s) on frame waiting\n";
-    } else {
+    if (vkWaitForFences(device, 8, frameFences[tmp].data(), VK_TRUE, 10000000000) == VK_SUCCESS) {
         vkResetFences(device, 8, frameFences[tmp].data());
+    } else {
+        std::cerr << "Fatal: Timeout (10s) on frame waiting\n";
     }
 }
 
@@ -111,21 +111,23 @@ void Vulkan::drawFrame()
     //vkQueueWaitIdle(queues[8]);
 }
 
-void Vulkan::pushQueue()
+bool Vulkan::pushQueue()
 {
     if (async) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(50));
-        return;
+        return false;
     }
     if (prioritizedQueueSize > 0) {
         vkQueueSubmit(queues[8], 1, prioritizedSubmitQueue[prioritizedReadPos++], VK_NULL_HANDLE);
         --prioritizedQueueSize;
+        return true;
     }
     if (queueSize > 0) {
         vkQueueSubmit(queues[8], 1, syncSubmitQueue[readPos], syncFenceQueue[readPos]);
         ++readPos;
         --queueSize;
+        return true;
     }
+    return false;
 }
 
 void Vulkan::initBuffers()
@@ -171,7 +173,7 @@ void Vulkan::initBuffers()
     allocInfo.allocationSize = allocSize;
     allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
     for (auto &tex : texData) {
-        if (vkCreateBuffer(device, &bufferInfo, nullptr, &tex.buffer) != VK_SUCCESS)
+        if (vkCreateBuffer(device, &bInfo, nullptr, &tex.buffer) != VK_SUCCESS)
             throw std::runtime_error("Faild to create buffer");
         vkGetBufferMemoryRequirements(device, tex.buffer, &memRequirements);
         if (vkAllocateMemory(device, &allocInfo, nullptr, &tex.memory) != VK_SUCCESS)
@@ -180,6 +182,7 @@ void Vulkan::initBuffers()
             throw std::runtime_error("Faild to map memory");
         tex.bufferOffset = allocSize - memRequirements.size;
         tex.bufferOffset -= tex.bufferOffset % memRequirements.alignment;
+        //std::cout << "buffer of size " << bInfo.size << " using " << memRequirements.size << " at offset " << tex.bufferOffset << " aligned at " << memRequirements.alignment << std::endl;
         if (vkBindBufferMemory(device, tex.buffer, tex.memory, tex.bufferOffset) != VK_SUCCESS)
             std::cerr << "Faild to bind buffer memory.\n";
         tex.buffPtr = tex.ptr + tex.bufferOffset;
@@ -196,13 +199,17 @@ void Vulkan::initBuffers()
 void Vulkan::createCommands()
 {
     int k = 0;
+    frameFences.resize(4);
     // Query textures and frameFences
     for (auto &loader : Graphics::instance->getLoaders()) {
         auto tex0 = loader->getFrame(0);
         auto tex1 = loader->getFrame(1);
         auto tex2 = loader->getFrame(2);
         auto tex3 = loader->getFrame(3);
-        frameFences.push_back({tex0->getFence(), tex1->getFence(), tex2->getFence(), tex3->getFence()});
+        frameFences[0].push_back(tex0->getFence());
+        frameFences[1].push_back(tex1->getFence());
+        frameFences[2].push_back(tex2->getFence());
+        frameFences[3].push_back(tex3->getFence());
         texData[k].textures.push_back(tex0->getView());
         texData[k].textures.push_back(tex1->getView());
         texData[k].textures.push_back(tex2->getView());
@@ -259,6 +266,7 @@ void Vulkan::createCommands()
         renderPassInfo.renderPass = renderPass;
         renderPassInfo.renderArea.offset = {0, 0};
         renderPassInfo.renderArea.extent = swapChainExtent;
+        renderPassInfo.framebuffer = swapChainFramebuffers[i];
         vkCmdBeginRenderPass(drawCommands[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
         vkCmdBindPipeline(drawCommands[i], VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
         VkDeviceSize offset = sizeof(UniformBlock);
@@ -296,7 +304,8 @@ void Vulkan::createDescriptorSets()
     allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
     allocInfo.descriptorPool = descriptorPool;
     allocInfo.descriptorSetCount = 4;
-    allocInfo.pSetLayouts = &descriptorSetLayout;
+    VkDescriptorSetLayout descLayouts[]{descriptorSetLayout, descriptorSetLayout, descriptorSetLayout, descriptorSetLayout};
+    allocInfo.pSetLayouts = descLayouts;
 
     sets.resize(4);
     if (vkAllocateDescriptorSets(device, &allocInfo, sets.data()) != VK_SUCCESS) {

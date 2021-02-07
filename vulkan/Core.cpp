@@ -45,7 +45,7 @@ void Core::mainloop()
     v.createCommands();
     isAlive = true;
     while (isAlive && aliveProcess) {
-        v.pushQueue();
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
         for (auto &module : modules) {
             aliveProcess &= module->isReady();
         }

@@ -25,14 +25,14 @@ class Vulkan;
 class Texture {
 public:
     Texture(Vulkan *master, VkQueue queue, VkCommandBuffer cmd, int width, int height,
-        VkDeviceMemory &memory, void *data, int offset, int &size,
-        VkBuffer buffer, void *bufferPtr, int bufferOffset);
+        VkDeviceMemory &memory, void *data, VkDeviceSize offset, int &size,
+        VkBuffer buffer, void *bufferPtr, VkDeviceSize bufferOffset);
     virtual ~Texture();
     Texture(const Texture &cpy) = delete;
     Texture &operator=(const Texture &src) = delete;
 
     // Initialize update method
-    void initUpdate(int bufferOffset);
+    void initUpdate(VkDeviceSize bufferOffset);
     // Update texture
     void update();
     // Load input file content in texture, if useDump is true, save texture memory to output file

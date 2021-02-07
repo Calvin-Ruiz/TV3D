@@ -16,8 +16,8 @@
 std::recursive_mutex Texture::mtx;
 
 Texture::Texture(Vulkan *master, VkQueue queue, VkCommandBuffer cmd, int width, int height,
-    VkDeviceMemory &memory, void *data, int offset, int &size,
-    VkBuffer buffer, void *bufferPtr, int bufferOffset) :
+    VkDeviceMemory &memory, void *data, VkDeviceSize offset, int &size,
+    VkBuffer buffer, void *bufferPtr, VkDeviceSize bufferOffset) :
     master(master), width(width), height(height), ptr(data), buffer(buffer), buffPtr(bufferPtr), queue(queue), cmd(cmd)
 {
     // Create texture
@@ -42,9 +42,10 @@ Texture::Texture(Vulkan *master, VkQueue queue, VkCommandBuffer cmd, int width, 
     }
     VkMemoryRequirements memRequirements;
     vkGetImageMemoryRequirements(master->refDevice, image, &memRequirements);
-    size = memRequirements.size + ((memRequirements.size % memRequirements.alignment) == 0 ? 0 : memRequirements.size - memRequirements.size % memRequirements.alignment);
+    size = memRequirements.size + ((memRequirements.size % memRequirements.alignment) == 0 ? 0 : memRequirements.alignment - memRequirements.size % memRequirements.alignment);
     this->size = size;
 
+    //std::cout << "Bind image of size " << size << " at offset " << offset << " aligned at " << memRequirements.alignment << std::endl;
     if (vkBindImageMemory(master->refDevice, image, memory, offset) != VK_SUCCESS) {
         std::cerr << "Faild to bind memory to VkImage\n";
         vkDestroyImage(master->refDevice, image, nullptr);
@@ -73,7 +74,7 @@ Texture::~Texture()
     // Resources are not destroyed yet, no time for this
 }
 
-void Texture::initUpdate(int bufferOffset)
+void Texture::initUpdate(VkDeviceSize bufferOffset)
 {
     VkCommandBufferBeginInfo beginInfo{};
     beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -83,7 +84,7 @@ void Texture::initUpdate(int bufferOffset)
     VkImageMemoryBarrier barrier;
     barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
     barrier.pNext = nullptr;
-    barrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
+    barrier.srcAccessMask = 0;
     barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
     barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
     barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
@@ -102,7 +103,7 @@ void Texture::initUpdate(int bufferOffset)
 
     barrier.oldLayout = barrier.newLayout;
     barrier.srcAccessMask = barrier.dstAccessMask;
-    barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+    barrier.dstAccessMask = 0;
     barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
     vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, VK_DEPENDENCY_BY_REGION_BIT, 0, nullptr, 0, nullptr, 1, &barrier);
 
@@ -132,7 +133,7 @@ bool Texture::compile(const std::string &input, const std::string &output)
     unsigned char *image_data = stbi_load(input.c_str(), &width, &height, &depth, channels);
 
     if (image_data) {
-        memcpy(buffPtr, image_data, width * height * channels * 3);
+        memcpy(buffPtr, image_data, width * height * channels);
         update();
         if (useDump) {
             vkQueueWaitIdle(queue);

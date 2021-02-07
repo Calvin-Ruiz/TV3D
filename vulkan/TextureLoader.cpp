@@ -37,16 +37,17 @@ TextureLoader::~TextureLoader() {}
 void TextureLoader::initialize()
 {
     TexData data = master->getDataBlock(id);
-    int offset = 0;
+    VkDeviceSize offset = 0;
+    VkDeviceSize buffOffset = 0;
     int size = data.size;
     Texture::lock();
     for (int i = 0; i < 4; ++i) {
         textures.emplace_back(new Texture(master, queue, cmds[i], gwidth, gheight,
             data.memory, data.ptr, offset, size,
-            data.buffer, data.buffPtr, data.bufferOffset));
+            data.buffer, data.buffPtr, buffOffset));
             offset += size;
             data.ptr += size;
-            data.bufferOffset += gwidth * gheight * 3;
+            buffOffset += gwidth * gheight * 3;
             data.buffPtr += gwidth * gheight * 3;
     }
     master->setDataSize(id, size);

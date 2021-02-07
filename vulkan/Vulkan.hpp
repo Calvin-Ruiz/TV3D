@@ -62,7 +62,7 @@ public:
     uint32_t getQueueIndex() {return queueIndex;}
     // Call this once all textures were initialized
     void createCommands();
-    void pushQueue();
+    bool pushQueue();
     inline void addSubmit(VkSubmitInfo *submitInfo, VkFence fence)
     {
         unsigned char pos = writePos++;

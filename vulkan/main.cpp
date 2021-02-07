@@ -6,6 +6,7 @@
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 #include <fstream>
+#include <unistd.h>
 
 bool effect = true;
 bool rescale = false;
@@ -18,11 +19,14 @@ int gwidth = 0;
 
 static void sigTerm(int sig)
 {
+    static int count = 0;
     (void) sig;
     if (Core::core == nullptr)
         return;
     Core::core->kill();
-    std::cout << "\rExiting...\n";
+    std::cout << "\rExiting... (kill if called 3 times)\n";
+    if (++count == 3)
+        kill(getpid(), 9);
 }
 
 void start(GLFWwindow *window)
@@ -63,7 +67,7 @@ void start(GLFWwindow *window)
     Graphics *tmp = new Graphics(window, loaders);
     for (int i = 0; i < loaders.size(); ++i) {
         std::string num = std::to_string(i);
-        loaders[i] = new TextureLoader(Graphics::vulkan.get(), i + 1, path + num + preFile + num + postFile, dumpPath + num + dumpPreFile + num + dumpPostFile);
+        loaders[i] = new TextureLoader(Graphics::vulkan.get(), i, path + num + preFile + num + postFile, dumpPath + num + dumpPreFile + num + dumpPostFile);
     }
     core.startMainloop(fps, tmp);
     for (auto loader : loaders)

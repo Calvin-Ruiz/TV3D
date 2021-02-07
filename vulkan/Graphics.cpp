@@ -50,6 +50,13 @@ void Graphics::initialize()
 
 void Graphics::refresh()
 {
+    for (auto &tex : texLoader) {
+        if (!tex->hasFrame()) {
+            while (vulkan->pushQueue());
+            return;
+        }
+    }
+    while (vulkan->pushQueue());
     vulkan->waitFrame();
     if (effect)
         *brightPos = (height - frame++);
@@ -59,6 +66,7 @@ void Graphics::refresh()
     for (auto &tex : texLoader) {
         tex->releaseFrame();
     }
+    while (vulkan->pushQueue());
 }
 
 void Graphics::update()
