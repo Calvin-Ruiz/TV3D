@@ -32,7 +32,11 @@ TextureLoader::TextureLoader(Vulkan *master, int id, const std::string &path, co
     isCompiled = useDump;
 }
 
-TextureLoader::~TextureLoader() {}
+TextureLoader::~TextureLoader()
+{
+    textures.clear();
+    vkDestroyCommandPool(master->refDevice, pool, nullptr);
+}
 
 void TextureLoader::initialize()
 {

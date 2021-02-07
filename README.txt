@@ -1,3 +1,4 @@
+>>> OpenGL 4.4 version <<<
 Escape -> pause
 Space, Return -> unpause
 Q, close window, termination signal -> Exit

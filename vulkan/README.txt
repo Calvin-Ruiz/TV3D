@@ -1,3 +1,4 @@
+>>> Vulkan version <<<
 > Build for integraded GPU only for heavy optimizations on transfers <
 Escape -> pause
 Space, Return -> unpause

@@ -158,7 +158,6 @@ private:
     std::vector<VkSubmitInfo *> prioritizedSubmitQueue;
     unsigned char prioritizedReadPos = 0;
     unsigned char readPos = 0;
-    VkFence mainFence;
     unsigned char prioritizedWritePos = 0;
     std::atomic<unsigned char> writePos;
     std::atomic<short> queueSize;

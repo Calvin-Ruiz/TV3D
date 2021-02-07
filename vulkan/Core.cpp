@@ -54,6 +54,7 @@ void Core::mainloop()
     for (auto &th : threads) {
         th.join();
     }
+    vkDeviceWaitIdle(v.refDevice);
     threads.clear();
     modules.clear();
 }

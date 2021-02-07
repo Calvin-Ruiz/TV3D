@@ -7,6 +7,7 @@
 #include <GLFW/glfw3.h>
 #include <fstream>
 #include <unistd.h>
+#include "Vulkan.hpp"
 
 bool effect = true;
 bool rescale = false;
@@ -90,6 +91,7 @@ int main(int argc, char const *argv[])
     int height = video->height;
     GLFWwindow *VkWindow = glfwCreateWindow(width, height, "Vulkan", monitor, nullptr);
     start(VkWindow);
+    Graphics::vulkan = nullptr;
     glfwDestroyWindow(VkWindow);
     glfwTerminate();
     return 0;

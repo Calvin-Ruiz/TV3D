@@ -66,7 +66,6 @@ void Graphics::refresh()
     for (auto &tex : texLoader) {
         tex->releaseFrame();
     }
-    while (vulkan->pushQueue());
 }
 
 void Graphics::update()

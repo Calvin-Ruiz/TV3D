@@ -71,7 +71,9 @@ Texture::Texture(Vulkan *master, VkQueue queue, VkCommandBuffer cmd, int width, 
 
 Texture::~Texture()
 {
-    // Resources are not destroyed yet, no time for this
+    vkDestroyImage(master->refDevice, image, nullptr);
+    vkDestroyImageView(master->refDevice, imageView, nullptr);
+    vkDestroyFence(master->refDevice, fence, nullptr);
 }
 
 void Texture::initUpdate(VkDeviceSize bufferOffset)

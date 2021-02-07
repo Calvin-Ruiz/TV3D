@@ -65,7 +65,25 @@ Vulkan::Vulkan(int width, int height, GLFWwindow *window) : refDevice(device), r
     }
 }
 
-Vulkan::~Vulkan() {}
+Vulkan::~Vulkan()
+{
+    vkDeviceWaitIdle(device);
+    vkDestroyDescriptorPool(device, descriptorPool, nullptr);
+    vkDestroyBuffer(device, buffers, nullptr);
+    vkFreeMemory(device, bufferMemory, nullptr);
+    vkDestroyCommandPool(device, singlePool, nullptr);
+    vkDestroyCommandPool(device, pool, nullptr);
+    for (auto &tex : texData) {
+        vkDestroyBuffer(device, tex.buffer, nullptr);
+        vkFreeMemory(device, tex.memory, nullptr);
+    }
+    for (auto &sem : acquired)
+        vkDestroySemaphore(device, sem, nullptr);
+    for (auto &sem : drawn)
+        vkDestroySemaphore(device, sem, nullptr);
+    vkDestroyDevice(device, nullptr);
+    destroyDebug();
+}
 
 void Vulkan::waitFrame()
 {
@@ -85,14 +103,15 @@ void Vulkan::drawFrame()
         std::cerr << "Fatal: Async between planned and optained frame\n";
     }
 
-    if (async) {
-        if (vkQueueSubmit(queues[8], 1, &submit[frameID], VK_NULL_HANDLE) != VK_SUCCESS) {
-            throw std::runtime_error("échec de l'envoi d'un command buffer!");
-        }
-    } else {
-        prioritizedSubmitQueue[writePos++] = &submit[frameID];
-        ++prioritizedQueueSize;
+    if (vkQueueSubmit(queues[8], 1, &submit[frameID], VK_NULL_HANDLE) != VK_SUCCESS) {
+        throw std::runtime_error("échec de l'envoi d'un command buffer!");
     }
+    // if (async) {
+    // } else {
+    //     std::cout << "submissions";
+    //     prioritizedSubmitQueue[writePos++] = &submit[frameID];
+    //     ++prioritizedQueueSize;
+    // }
 
     // Display result
     VkPresentInfoKHR presentInfo{};
@@ -105,8 +124,8 @@ void Vulkan::drawFrame()
     presentInfo.pSwapchains = &swapChain;
     presentInfo.pImageIndices = &frameID;
     presentInfo.pResults = nullptr; // Optionnel
-    while (prioritizedQueueSize > 0)
-        std::this_thread::yield();
+    // while (prioritizedQueueSize > 0)
+    //     pushQueue();
     vkQueuePresentKHR(queues[8], &presentInfo);
     //vkQueueWaitIdle(queues[8]);
 }
@@ -186,13 +205,6 @@ void Vulkan::initBuffers()
         if (vkBindBufferMemory(device, tex.buffer, tex.memory, tex.bufferOffset) != VK_SUCCESS)
             std::cerr << "Faild to bind buffer memory.\n";
         tex.buffPtr = tex.ptr + tex.bufferOffset;
-    }
-    if (!async) {
-        VkFenceCreateInfo fenceInfo{};
-        fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-        if (vkCreateFence(device, &fenceInfo, nullptr, &mainFence) != VK_SUCCESS) {
-            throw std::runtime_error("Failed to create fence.");
-        }
     }
 }
 
