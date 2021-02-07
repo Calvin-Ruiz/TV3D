@@ -59,8 +59,9 @@ void Graphics::refresh()
             return;
         }
     }
+    if (vulkan->pushQueue()) // assume there is at least one task to submit if submitting task
+        vulkan->waitFrame();
     while (vulkan->pushQueue());
-    vulkan->waitFrame();
     if (effect)
         *brightPos = (height - frame++);
     vulkan->drawFrame();

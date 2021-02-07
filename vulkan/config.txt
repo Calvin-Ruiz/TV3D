@@ -3,5 +3,5 @@ PATH assets/source/source_0 /source_0 _
 DUMP textureDump/channel /dump _
 FPS 144
 EFFECT off
-USEDUMP off
+USEDUMP on
 DEBUG off

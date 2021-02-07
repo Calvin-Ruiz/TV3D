@@ -176,7 +176,7 @@ bool Texture::save()
 
 bool Texture::load(const std::string &filename)
 {
-    std::ifstream file(filename, std::ios::binary);
+    std::ifstream file(filename, std::ifstream::binary | std::ifstream::in);
 
     if (file.is_open()) {
         file.read((char *) ptr, size); // Directly write to texture
