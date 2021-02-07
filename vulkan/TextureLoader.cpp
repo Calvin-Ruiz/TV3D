@@ -79,8 +79,9 @@ void TextureLoader::update()
         ++writeIndex;
         writeIndex &= 3;
     } else {
-        std::cout << "No frame '" + (isCompiled ? output : filename) + "' found\n";
-        if (isCompiled && frameID == 1)
+        std::cout << "No frame '" + (isCompiled ? output : filename) + "' found\nReloop to first frame\n";
+        isCompiled = true;
+        if (frameID == 1)
             isCompiled = false; // We expect compiled form, but it is not compiled yet
         frameID = 0;
     }
@@ -103,7 +104,8 @@ Texture *TextureLoader::getFrame(int id)
 
 void TextureLoader::releaseFrame()
 {
+    if (!isCompiled && queue == VK_NULL_HANDLE)
+        textures[readIndex++]->save();
     --count;
-    ++readIndex;
     readIndex &= 3;
 }

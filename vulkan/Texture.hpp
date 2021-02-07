@@ -37,6 +37,8 @@ public:
     void update();
     // Load input file content in texture, if useDump is true, save texture memory to output file
     bool compile(const std::string &input, const std::string &output);
+    // Save texture content, to use in non-async mode
+    bool save();
     // Write file content to texture memory
     bool load(const std::string &filename);
     // Get texture handle
@@ -62,6 +64,7 @@ private:
     VkCommandBuffer cmd;
     VkSubmitInfo submit{};
     VkFence fence;
+    std::string nextOutput;
     static std::recursive_mutex mtx;
 };
 

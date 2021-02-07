@@ -138,7 +138,12 @@ bool Texture::compile(const std::string &input, const std::string &output)
         memcpy(buffPtr, image_data, width * height * channels);
         update();
         if (useDump) {
-            vkQueueWaitIdle(queue);
+            if (queue == VK_NULL_HANDLE) {
+                nextOutput = output;
+                return true;
+            } else {
+                vkQueueWaitIdle(queue);
+            }
             std::ofstream file(output, std::ios::binary);
             if (file.is_open()) {
                 file.write((char *) ptr, size);
@@ -152,6 +157,21 @@ bool Texture::compile(const std::string &input, const std::string &output)
         std::cerr << "Texture: could not load image '"  << input << "'\n";
         return false;
     }
+}
+
+bool Texture::save()
+{
+    if (nextOutput.empty())
+        return true;
+    std::ofstream file(nextOutput, std::ios::binary);
+    if (file.is_open()) {
+        file.write((char *) ptr, size);
+    } else {
+        std::cerr << "Texture: could not save image '"  << nextOutput << "'\n";
+        return false;
+    }
+    nextOutput.clear();
+    return true;
 }
 
 bool Texture::load(const std::string &filename)
