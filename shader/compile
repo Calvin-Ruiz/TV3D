@@ -1,0 +1,5 @@
+#!/bin/bash
+cd shader
+glslc --target-env="vulkan1.1" shader.frag -o shader.frag.spv
+glslc --target-env="vulkan1.1" shader.vert -o shader.vert.spv
+echo "Compilation completed."

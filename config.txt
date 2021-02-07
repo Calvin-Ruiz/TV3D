@@ -1,0 +1,4 @@
+PATH assets/source/source_0 /source_0 _
+FPS 60
+EFFECT on
+FAST on
