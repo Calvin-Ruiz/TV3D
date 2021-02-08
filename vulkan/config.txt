@@ -1,7 +1,7 @@
 SIZE 1920 1080
 PATH assets/source/source_0 /source_0 _
 DUMP textureDump/channel /dump _
-FPS 144
+FPS 30
 EFFECT off
-USEDUMP on
-DEBUG off
+USEDUMP off
+DEBUG on

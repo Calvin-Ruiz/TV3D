@@ -53,15 +53,17 @@ void Graphics::initialize()
 
 void Graphics::refresh()
 {
+    std::cout << "Refresh sequence\n";
     for (auto &tex : texLoader) {
         if (!tex->hasFrame()) {
             while (vulkan->pushQueue());
             return;
         }
     }
-    if (vulkan->pushQueue()) // assume there is at least one task to submit if submitting task
-        vulkan->waitFrame();
+    bool hasSubmitted = vulkan->pushQueue(); // assume there is at least one task to submit if submitting task
     while (vulkan->pushQueue());
+    if (hasSubmitted)
+        vulkan->waitFrame();
     if (effect)
         *brightPos = (height - frame++);
     vulkan->drawFrame();
