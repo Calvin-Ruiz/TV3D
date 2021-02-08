@@ -47,6 +47,8 @@ public:
     static void lock();
     // Unblock texture bindings
     static void unlock();
+    // Invalidate last binding
+    static void invalidateBinding();
 private:
     int width, height, depth, channels;
     GLuint tex = 0;

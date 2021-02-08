@@ -54,8 +54,8 @@ static void catchError()
 
 void Graphics::initialize()
 {
-    height = glfwGetVideoMode(glfwGetPrimaryMonitor())->height;
     Texture::lock();
+    height = glfwGetVideoMode(glfwGetPrimaryMonitor())->height;
     glewInit();
     shader = std::make_unique<shaderProgram>();
     shader->init("shader.vert", "shader.frag");
@@ -98,10 +98,10 @@ void Graphics::refresh()
     if (effect)
         shader->setUniform("brightPos", (float) (height - frame++));
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    glfwSwapBuffers(window);
     Texture::unlock();
     if (++frame >= height + 5)
         frame = -5;
-    glfwSwapBuffers(window);
     for (auto &tex : texLoader) {
         tex->releaseFrame();
     }
@@ -127,10 +127,10 @@ void Graphics::onPause()
 
 void Graphics::acquireOwnership()
 {
-    static std::thread::id owner;
+    glfwMakeContextCurrent(window);
+}
 
-    if (owner != std::this_thread::get_id()) {
-        glfwMakeContextCurrent(window);
-        owner = std::this_thread::get_id();
-    }
+void Graphics::releaseOwnership()
+{
+    glfwMakeContextCurrent(nullptr);
 }

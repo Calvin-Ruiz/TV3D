@@ -42,7 +42,7 @@ static void catchError()
 
 Texture::Texture(int width, int height, int depth, int channels) : width(width), height(height), depth(depth), channels(channels)
 {
-    lock();
+    //lock();
     glGenTextures(1, &tex);
     if (tex == 0) {
         std::cerr << "Failed to create texture\n";
@@ -51,7 +51,7 @@ Texture::Texture(int width, int height, int depth, int channels) : width(width),
     glBindTexture(TEX, tex);
     glTexParameteri(TEX, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(TEX, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    mtx.unlock();
+    //unlock();
 }
 
 Texture::~Texture()
@@ -70,7 +70,7 @@ void Texture::bind()
 
 void Texture::unbind()
 {
-    mtx.unlock();
+    unlock();
 }
 
 void Texture::update(unsigned char *data)
@@ -114,8 +114,13 @@ void Texture::lock()
 
 void Texture::unlock()
 {
-    bound = 0;
+    Graphics::releaseOwnership();
     mtx.unlock();
+}
+
+void Texture::invalidateBinding()
+{
+    bound = 0;
 }
 
 unsigned char *Texture::rescaling(unsigned char *data)

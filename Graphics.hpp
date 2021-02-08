@@ -33,6 +33,7 @@ public:
     virtual void onPause() override;
     static Graphics *instance;
     void acquireOwnership();
+    static void releaseOwnership();
 private:
     GLFWwindow *window;
     std::array<TextureLoader *, 8> &texLoader;
