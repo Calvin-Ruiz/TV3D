@@ -31,3 +31,5 @@ vulkan
         channel5
         channel6
         channel7
+
+compile.sh may need to be run twice the first time
