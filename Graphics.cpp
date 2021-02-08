@@ -79,6 +79,7 @@ void Graphics::initialize()
     vertex->update(datas);
     vertex->bindLocation();
     vertex->bind();
+    glViewport(0, 0, glfwGetVideoMode(glfwGetPrimaryMonitor())->width, height);
     Texture::unlock();
     ready = true;
 }
